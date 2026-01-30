@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bottom Finder | Tactical Stock Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide-static@0.321.0/font/lucide.min.js"></script>
+    <style>
+        .signal-card { transition: all 0.3s ease; }
+        .signal-card:hover { transform: translateY(-2px); }
+        .loader { border-top-color: #3b82f6; animation: spinner 1.5s linear infinite; }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+
+    <!-- Header -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="bg-blue-600 p-2 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4-4 4 4 4-4 4 4"/><path d="M18 7h3v3"/><path d="M18 10V7h-3"/></svg>
+                </div>
+                <h1 class="text-xl font-bold tracking-tight">BottomFinder <span class="text-blue-600">v1.0</span></h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <input type="text" id="tickerInput" placeholder="Enter Symbol (e.g. AAPL)" 
+                    class="border border-slate-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase w-32 md:w-48">
+                <button id="analyzeBtn" class="bg-blue-600 text-white px-6 py-2 rounded-md font-medium hover:bg-blue-700 transition">Analyze</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Welcome / Strategy Intro -->
+        <div id="welcomeState" class="text-center py-20">
+            <h2 class="text-3xl font-bold mb-4">Stock Bottom-Fishing Dashboard</h2>
+            <p class="text-slate-600 max-w-2xl mx-auto mb-8">
+                Identify entries near historical lows using a combination of EMA crossovers, basing patterns, and waterfall decline logic.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left max-w-4xl mx-auto">
+                <div class="p-6 bg-white rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-blue-600 mb-2">Technical Analysis</h3>
+                    <p class="text-sm text-slate-500">5/20 EMA crossovers, 52-week low basing, and "V" bottom reversals.</p>
+                </div>
+                <div class="p-6 bg-white rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-blue-600 mb-2">Fundamental DD</h3>
+                    <p class="text-sm text-slate-500">Valuation checks and margin of safety to ensure you aren't buying a value trap.</p>
+                </div>
+                <div class="p-6 bg-white rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-blue-600 mb-2">Sentiment Tracking</h3>
+                    <p class="text-sm text-slate-500">Waiting for dejection and capitulation before committing capital.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Content (Hidden by default) -->
+        <div id="dashboardContent" class="hidden space-y-8">
+            
+            <!-- Summary Bar -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">Current Price</p>
+                    <p id="currentPrice" class="text-3xl font-bold">—</p>
+                    <p id="priceChange" class="text-sm mt-1">—</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">52-Week Low</p>
+                    <p id="low52" class="text-3xl font-bold">—</p>
+                    <p id="distFromLow" class="text-sm mt-1">—</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">P/E Ratio (TTM)</p>
+                    <p id="peRatio" class="text-3xl font-bold">—</p>
+                    <p id="valuationStatus" class="text-sm mt-1">—</p>
+                </div>
+                <div id="overallSignal" class="p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center bg-slate-100">
+                    <p class="text-xs font-semibold uppercase tracking-wider mb-1">Bottom Signal</p>
+                    <p id="signalText" class="text-xl font-bold uppercase tracking-tight">No Data</p>
+                </div>
+            </div>
+
+            <!-- Main Analysis Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <!-- Chart Section -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="font-bold text-lg">Price Action & EMAs (1 Year)</h3>
+                            <div class="flex gap-4 text-xs">
+                                <span class="flex items-center gap-1"><div class="w-3 h-3 bg-blue-500 rounded-full"></div> 5 EMA</span>
+                                <span class="flex items-center gap-1"><div class="w-3 h-3 bg-orange-400 rounded-full"></div> 20 EMA</span>
+                            </div>
+                        </div>
+                        <canvas id="stockChart" height="400"></canvas>
+                    </div>
+
+                    <!-- Catalyst & Sentiment Mock -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                            <h3 class="font-bold mb-4 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-blue-500"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                                Catalyst Tracking
+                            </h3>
+                            <ul class="space-y-3 text-sm" id="catalystList">
+                                <li class="flex gap-3">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-slate-300 mt-1.5"></div>
+                                    <span>Identifying upcoming earnings or macro events...</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                            <h3 class="font-bold mb-4 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-blue-500"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                                Sentiment Pulse
+                            </h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>Retail Sentiment</span>
+                                        <span id="retailSentimentLabel">Dejected</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 rounded-full h-2">
+                                        <div id="retailSentimentBar" class="bg-red-400 h-2 rounded-full" style="width: 25%"></div>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-slate-500 italic">"Look for entry points when early buyers have become dejected and finally given up."</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tactics Sidebar -->
+                <div class="space-y-4">
+                    <h3 class="font-bold text-lg mb-4">Tactical Signals</h3>
+                    
+                    <!-- EMA Cross -->
+                    <div class="signal-card bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-slate-300" id="sigEma">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold">EMA Crossover</h4>
+                            <span class="status-badge px-2 py-0.5 rounded text-[10px] bg-slate-100 text-slate-500">WAITING</span>
+                        </div>
+                        <p class="text-xs text-slate-500 leading-relaxed">Wait for the 5-period EMA to cross above the 20-period EMA for trend confirmation.</p>
+                    </div>
+
+                    <!-- Basing -->
+                    <div class="signal-card bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-slate-300" id="sigBasing">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold">Basing (>5% off Low)</h4>
+                            <span class="status-badge px-2 py-0.5 rounded text-[10px] bg-slate-100 text-slate-500">WAITING</span>
+                        </div>
+                        <p class="text-xs text-slate-500 leading-relaxed">Ideally at least 5% above 52-week lows to show evidence of holding support.</p>
+                    </div>
+
+                    <!-- Right Side V -->
+                    <div class="signal-card bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-slate-300" id="sigRightV">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold">Right Side of "V"</h4>
+                            <span class="status-badge px-2 py-0.5 rounded text-[10px] bg-slate-100 text-slate-500">WAITING</span>
+                        </div>
+                        <p class="text-xs text-slate-500 leading-relaxed">Wait for price to stop declining and reverse back to your target entry level.</p>
+                    </div>
+
+                    <!-- Waterfall -->
+                    <div class="signal-card bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-slate-300" id="sigWaterfall">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold">Waterfall Decline</h4>
+                            <span class="status-badge px-2 py-0.5 rounded text-[10px] bg-slate-100 text-slate-500">WAITING</span>
+                        </div>
+                        <p class="text-xs text-slate-500 leading-relaxed">A riskier setup triggered by high volume rapid drops, often resulting in capitulation.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="hidden fixed inset-0 bg-white/80 backdrop-blur-sm z-[100] flex flex-col items-center justify-center">
+            <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4"></div>
+            <p class="text-slate-600 font-medium">Crunching Tactic Signals...</p>
+        </div>
+
+    </main>
+
+    <script>
+        // API Keys (Hardcoded as requested for static hosting)
+        const FMP_KEY = 'zZ5zECyopZEcPtKvkqlb1R52jv2vFusj';
+        const FINNHUB_KEY = 'd22igc9r01qr7ajlkob0d22igc9r01qr7ajlkobg';
+        
+        let stockChart = null;
+
+        const ui = {
+            input: document.getElementById('tickerInput'),
+            btn: document.getElementById('analyzeBtn'),
+            dashboard: document.getElementById('dashboardContent'),
+            welcome: document.getElementById('welcomeState'),
+            loader: document.getElementById('loadingOverlay'),
+            price: document.getElementById('currentPrice'),
+            change: document.getElementById('priceChange'),
+            low52: document.getElementById('low52'),
+            distLow: document.getElementById('distFromLow'),
+            pe: document.getElementById('peRatio'),
+            valuation: document.getElementById('valuationStatus'),
+            signalBox: document.getElementById('overallSignal'),
+            signalText: document.getElementById('signalText')
+        };
+
+        // --- Core Analysis Logic ---
+
+        async function fetchStockData(symbol) {
+            try {
+                // 1. Fetch Daily History (FMP)
+                const histResponse = await fetch(`https://financialmodelingprep.com/api/v3/historical-price-full/${symbol}?apikey=${FMP_KEY}`);
+                const histData = await histResponse.json();
+
+                // 2. Fetch Profile/Metrics (FMP)
+                const profileResponse = await fetch(`https://financialmodelingprep.com/api/v3/profile/${symbol}?apikey=${FMP_KEY}`);
+                const profileData = await profileResponse.json();
+
+                if (!histData.historical || histData.historical.length === 0) throw new Error("Ticker not found");
+
+                return {
+                    history: histData.historical.reverse(), // Oldest to Newest
+                    profile: profileData[0] || {}
+                };
+            } catch (err) {
+                alert("Error fetching data: " + err.message);
+                return null;
+            }
+        }
+
+        function calculateEMA(data, period) {
+            let ema = [];
+            let k = 2 / (period + 1);
+            let prevEMA = data[0].close;
+            ema[0] = prevEMA;
+
+            for (let i = 1; i < data.length; i++) {
+                let currentEMA = (data[i].close - prevEMA) * k + prevEMA;
+                ema.push(currentEMA);
+                prevEMA = currentEMA;
+            }
+            return ema;
+        }
+
+        function analyzeTactics(history, profile) {
+            const currentPrice = history[history.length - 1].close;
+            const prices = history.map(d => d.close);
+            const volumes = history.map(d => d.volume);
+            
+            // 52 Week Low Logic
+            const yearData = history.slice(-252);
+            const low52 = Math.min(...yearData.map(d => d.low));
+            const distFromLow = ((currentPrice - low52) / low52) * 100;
+
+            // EMA Cross Logic
+            const ema5 = calculateEMA(history, 5);
+            const ema20 = calculateEMA(history, 20);
+            const lastEma5 = ema5[ema5.length - 1];
+            const lastEma20 = ema20[ema20.length - 1];
+            const prevEma5 = ema5[ema5.length - 2];
+            const prevEma20 = ema20[ema20.length - 2];
+            
+            const isEmaBullish = lastEma5 > lastEma20;
+            const isEmaCrossover = lastEma5 > lastEma20 && prevEma5 <= prevEma20;
+
+            // Waterfall Check (Drop > 10% in 5 days with high volume spike)
+            const weekPrices = prices.slice(-5);
+            const weekVol = volumes.slice(-5);
+            const avgVol = volumes.slice(-30).reduce((a,b)=>a+b,0)/30;
+            const drop = ((weekPrices[4] - weekPrices[0]) / weekPrices[0]) * 100;
+            const volSpike = weekVol.some(v => v > avgVol * 1.5);
+            const isWaterfall = drop < -10 && volSpike;
+
+            // Basing (>5% off low)
+            const isBasing = distFromLow >= 5 && distFromLow <= 15;
+
+            // Right Side V (Recent bounce from low)
+            const localLow = Math.min(...prices.slice(-20));
+            const isRightV = currentPrice > localLow && prices[prices.length-2] < currentPrice;
+
+            return {
+                currentPrice,
+                low52,
+                distFromLow,
+                isEmaBullish,
+                isEmaCrossover,
+                isWaterfall,
+                isBasing,
+                isRightV,
+                ema5,
+                ema20
+            };
+        }
+
+        function updateUI(data, results, symbol) {
+            ui.welcome.classList.add('hidden');
+            ui.dashboard.classList.remove('hidden');
+
+            const lastDay = data.history[data.history.length - 1];
+            const changePct = lastDay.changePercent || 0;
+
+            // Summary Stats
+            ui.price.textContent = `$${results.currentPrice.toFixed(2)}`;
+            ui.change.textContent = `${changePct > 0 ? '+' : ''}${changePct.toFixed(2)}% Today`;
+            ui.change.className = `text-sm mt-1 font-medium ${changePct >= 0 ? 'text-green-600' : 'text-red-600'}`;
+            
+            ui.low52.textContent = `$${results.low52.toFixed(2)}`;
+            ui.distLow.textContent = `${results.distFromLow.toFixed(1)}% above 52w low`;
+            
+            const pe = data.profile.pe || 'N/A';
+            ui.pe.textContent = pe === 'N/A' ? 'N/A' : parseFloat(pe).toFixed(1);
+            ui.valuation.textContent = pe < 15 ? 'Discount Valuation' : pe > 25 ? 'Premium Valuation' : 'Fair Value';
+            ui.valuation.className = `text-sm mt-1 font-medium ${pe < 15 ? 'text-green-600' : 'text-slate-500'}`;
+
+            // Signals Update
+            updateSignal('sigEma', results.isEmaCrossover, results.isEmaBullish ? 'BULLISH' : 'WAITING');
+            updateSignal('sigBasing', results.isBasing, results.isBasing ? 'BASE DETECTED' : 'WAITING');
+            updateSignal('sigRightV', results.isRightV, results.isRightV ? 'REVERSING' : 'DECLINING');
+            updateSignal('sigWaterfall', results.isWaterfall, results.isWaterfall ? 'CRASHING' : 'STABLE');
+
+            // Overall
+            let scores = [results.isEmaBullish, results.isBasing, results.isRightV].filter(x => x).length;
+            if (scores >= 2) {
+                ui.signalBox.className = "p-6 rounded-xl shadow-sm flex flex-col justify-center items-center text-center bg-green-50 border border-green-200 text-green-700";
+                ui.signalText.textContent = "BUY SIGNAL";
+            } else if (results.isWaterfall) {
+                ui.signalBox.className = "p-6 rounded-xl shadow-sm flex flex-col justify-center items-center text-center bg-orange-50 border border-orange-200 text-orange-700";
+                ui.signalText.textContent = "WATCH WATERFALL";
+            } else {
+                ui.signalBox.className = "p-6 rounded-xl shadow-sm flex flex-col justify-center items-center text-center bg-slate-100 border border-slate-200 text-slate-500";
+                ui.signalText.textContent = "NO SETUP";
+            }
+
+            renderChart(data.history, results.ema5, results.ema20);
+        }
+
+        function updateSignal(id, active, label) {
+            const el = document.getElementById(id);
+            const badge = el.querySelector('.status-badge');
+            
+            if (active || label.includes('BULLISH') || label.includes('DETECTED') || label.includes('REVERSING')) {
+                el.classList.replace('border-l-slate-300', 'border-l-blue-500');
+                badge.className = "status-badge px-2 py-0.5 rounded text-[10px] bg-blue-100 text-blue-600 font-bold";
+                badge.textContent = label;
+            } else {
+                el.classList.replace('border-l-blue-500', 'border-l-slate-300');
+                badge.className = "status-badge px-2 py-0.5 rounded text-[10px] bg-slate-100 text-slate-500";
+                badge.textContent = label;
+            }
+        }
+
+        function renderChart(history, ema5, ema20) {
+            const ctx = document.getElementById('stockChart').getContext('2d');
+            const labels = history.slice(-60).map(d => d.date);
+            const priceData = history.slice(-60).map(d => d.close);
+            const ema5Data = ema5.slice(-60);
+            const ema20Data = ema20.slice(-60);
+
+            if (stockChart) stockChart.destroy();
+
+            stockChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Price',
+                            data: priceData,
+                            borderColor: '#1e293b',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0.1
+                        },
+                        {
+                            label: '5 EMA',
+                            data: ema5Data,
+                            borderColor: '#3b82f6',
+                            borderWidth: 1.5,
+                            pointRadius: 0,
+                            borderDash: [5, 5]
+                        },
+                        {
+                            label: '20 EMA',
+                            data: ema20Data,
+                            borderColor: '#fb923c',
+                            borderWidth: 1.5,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        x: { display: false },
+                        y: { position: 'right', grid: { color: '#f1f5f9' } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        // --- Event Handlers ---
+
+        ui.btn.addEventListener('click', async () => {
+            const symbol = ui.input.value.trim().toUpperCase();
+            if (!symbol) return;
+
+            ui.loader.classList.remove('hidden');
+            const data = await fetchStockData(symbol);
+            if (data) {
+                const results = analyzeTactics(data.history, data.profile);
+                updateUI(data, results, symbol);
+            }
+            ui.loader.classList.add('hidden');
+        });
+
+        ui.input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') ui.btn.click();
+        });
+
+    </script>
+</body>
+</html>
