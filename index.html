@@ -6,15 +6,16 @@
     <title>Bottom Finder | Tactical Stock Analysis</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/lucide-static@0.321.0/font/lucide.min.js"></script>
     <style>
         .signal-card { transition: all 0.3s ease; }
         .signal-card:hover { transform: translateY(-2px); }
         .loader { border-top-color: #3b82f6; animation: spinner 1.5s linear infinite; }
         @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .animate-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen">
+<body class="bg-slate-50 text-slate-900 min-h-screen font-sans">
 
     <!-- Header -->
     <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
@@ -23,112 +24,105 @@
                 <div class="bg-blue-600 p-2 rounded-lg">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4-4 4 4 4-4 4 4"/><path d="M18 7h3v3"/><path d="M18 10V7h-3"/></svg>
                 </div>
-                <h1 class="text-xl font-bold tracking-tight">BottomFinder <span class="text-blue-600">v1.0</span></h1>
+                <h1 class="text-xl font-bold tracking-tight">BottomFinder <span class="text-blue-600">v1.4</span></h1>
             </div>
             <div class="flex items-center gap-4">
-                <input type="text" id="tickerInput" placeholder="Enter Symbol (e.g. AAPL)" 
+                <input type="text" id="tickerInput" placeholder="Symbol (e.g. SOFI)" 
                     class="border border-slate-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase w-32 md:w-48">
-                <button id="analyzeBtn" class="bg-blue-600 text-white px-6 py-2 rounded-md font-medium hover:bg-blue-700 transition">Analyze</button>
+                <button id="analyzeBtn" class="bg-blue-600 text-white px-6 py-2 rounded-md font-medium hover:bg-blue-700 transition shadow-sm">Analyze</button>
             </div>
         </div>
     </nav>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        <!-- Welcome / Strategy Intro -->
+        <!-- Welcome State -->
         <div id="welcomeState" class="text-center py-20">
-            <h2 class="text-3xl font-bold mb-4">Stock Bottom-Fishing Dashboard</h2>
-            <p class="text-slate-600 max-w-2xl mx-auto mb-8">
-                Identify entries near historical lows using a combination of EMA crossovers, basing patterns, and waterfall decline logic.
+            <h2 class="text-4xl font-extrabold mb-4 text-slate-800">Identify Market Bottoms</h2>
+            <p class="text-slate-600 max-w-2xl mx-auto mb-10 text-lg">
+                Automated tactical analysis using the "Right Side of the V", EMA crossovers, and basing patterns.
             </p>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left max-w-4xl mx-auto">
-                <div class="p-6 bg-white rounded-xl shadow-sm border border-slate-200">
-                    <h3 class="font-bold text-blue-600 mb-2">Technical Analysis</h3>
-                    <p class="text-sm text-slate-500">5/20 EMA crossovers, 52-week low basing, and "V" bottom reversals.</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-left max-w-5xl mx-auto">
+                <div class="p-8 bg-white rounded-2xl shadow-sm border border-slate-200">
+                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="text-blue-600" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+                    </div>
+                    <h3 class="font-bold text-slate-800 mb-2">Technical Engine</h3>
+                    <p class="text-sm text-slate-500">Real-time calculations for 5/20 EMA trends and 52-week low relative positioning.</p>
                 </div>
-                <div class="p-6 bg-white rounded-xl shadow-sm border border-slate-200">
-                    <h3 class="font-bold text-blue-600 mb-2">Fundamental DD</h3>
-                    <p class="text-sm text-slate-500">Valuation checks and margin of safety to ensure you aren't buying a value trap.</p>
+                <div class="p-8 bg-white rounded-2xl shadow-sm border border-slate-200">
+                    <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="text-indigo-600" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    </div>
+                    <h3 class="font-bold text-slate-800 mb-2">Fundamental Safety</h3>
+                    <p class="text-sm text-slate-500">Valuation checks via P/E ratios and profile data to avoid "Value Traps".</p>
                 </div>
-                <div class="p-6 bg-white rounded-xl shadow-sm border border-slate-200">
-                    <h3 class="font-bold text-blue-600 mb-2">Sentiment Tracking</h3>
-                    <p class="text-sm text-slate-500">Waiting for dejection and capitulation before committing capital.</p>
+                <div class="p-8 bg-white rounded-2xl shadow-sm border border-slate-200">
+                    <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="text-purple-600" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    </div>
+                    <h3 class="font-bold text-slate-800 mb-2">Sentiment Pulse</h3>
+                    <p class="text-sm text-slate-500">Integrated news feed to track catalysts and gauge retail capitulation.</p>
                 </div>
             </div>
         </div>
 
-        <!-- Dashboard Content (Hidden by default) -->
-        <div id="dashboardContent" class="hidden space-y-8">
+        <!-- Dashboard Content -->
+        <div id="dashboardContent" class="hidden space-y-8 animate-in">
             
             <!-- Summary Bar -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                     <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">Current Price</p>
                     <p id="currentPrice" class="text-3xl font-bold">—</p>
-                    <p id="priceChange" class="text-sm mt-1">—</p>
+                    <p id="priceChange" class="text-sm mt-1 font-medium">—</p>
                 </div>
                 <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                     <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">52-Week Low</p>
                     <p id="low52" class="text-3xl font-bold">—</p>
-                    <p id="distFromLow" class="text-sm mt-1">—</p>
+                    <p id="distFromLow" class="text-sm mt-1 font-medium text-slate-500">—</p>
                 </div>
                 <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                     <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">P/E Ratio (TTM)</p>
                     <p id="peRatio" class="text-3xl font-bold">—</p>
-                    <p id="valuationStatus" class="text-sm mt-1">—</p>
+                    <p id="valuationStatus" class="text-sm mt-1 font-medium text-slate-500">—</p>
                 </div>
-                <div id="overallSignal" class="p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center bg-slate-100">
-                    <p class="text-xs font-semibold uppercase tracking-wider mb-1">Bottom Signal</p>
-                    <p id="signalText" class="text-xl font-bold uppercase tracking-tight">No Data</p>
+                <div id="overallSignal" class="p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center bg-slate-100 transition-all duration-300">
+                    <p class="text-xs font-semibold uppercase tracking-wider mb-1">Tactical Signal</p>
+                    <p id="signalText" class="text-xl font-bold uppercase tracking-tight">ANALYZING...</p>
                 </div>
             </div>
 
             <!-- Main Analysis Grid -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 
-                <!-- Chart Section -->
                 <div class="lg:col-span-2 space-y-6">
+                    <!-- Chart Section -->
                     <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                         <div class="flex justify-between items-center mb-6">
-                            <h3 class="font-bold text-lg">Price Action & EMAs (1 Year)</h3>
-                            <div class="flex gap-4 text-xs">
-                                <span class="flex items-center gap-1"><div class="w-3 h-3 bg-blue-500 rounded-full"></div> 5 EMA</span>
-                                <span class="flex items-center gap-1"><div class="w-3 h-3 bg-orange-400 rounded-full"></div> 20 EMA</span>
+                            <h3 class="font-bold text-lg text-slate-700">Price & EMA Trends (1 Year)</h3>
+                            <div class="flex gap-4 text-xs font-medium">
+                                <span class="flex items-center gap-1.5"><div class="w-3 h-3 bg-blue-500 rounded-full"></div> 5 EMA</span>
+                                <span class="flex items-center gap-1.5"><div class="w-3 h-3 bg-orange-400 rounded-full"></div> 20 EMA</span>
                             </div>
                         </div>
-                        <canvas id="stockChart" height="400"></canvas>
+                        <div class="h-[400px]">
+                            <canvas id="stockChart"></canvas>
+                        </div>
                     </div>
 
-                    <!-- Catalyst & Sentiment Mock -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                            <h3 class="font-bold mb-4 flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-blue-500"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                                Catalyst Tracking
-                            </h3>
-                            <ul class="space-y-3 text-sm" id="catalystList">
-                                <li class="flex gap-3">
-                                    <div class="w-1.5 h-1.5 rounded-full bg-slate-300 mt-1.5"></div>
-                                    <span>Identifying upcoming earnings or macro events...</span>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                            <h3 class="font-bold mb-4 flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-blue-500"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
-                                Sentiment Pulse
-                            </h3>
-                            <div class="space-y-4">
-                                <div>
-                                    <div class="flex justify-between text-xs mb-1">
-                                        <span>Retail Sentiment</span>
-                                        <span id="retailSentimentLabel">Dejected</span>
-                                    </div>
-                                    <div class="w-full bg-slate-100 rounded-full h-2">
-                                        <div id="retailSentimentBar" class="bg-red-400 h-2 rounded-full" style="width: 25%"></div>
-                                    </div>
+                    <!-- Catalyst Tracking -->
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                        <h3 class="font-bold mb-4 flex items-center gap-2 text-slate-700">
+                            <svg class="text-blue-500" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            Recent Catalysts (News)
+                        </h3>
+                        <div id="catalystList" class="space-y-4">
+                            <div class="animate-pulse flex space-x-4">
+                                <div class="flex-1 space-y-2 py-1">
+                                    <div class="h-2 bg-slate-200 rounded"></div>
+                                    <div class="h-2 bg-slate-200 rounded w-5/6"></div>
                                 </div>
-                                <p class="text-xs text-slate-500 italic">"Look for entry points when early buyers have become dejected and finally given up."</p>
                             </div>
                         </div>
                     </div>
@@ -136,42 +130,44 @@
 
                 <!-- Tactics Sidebar -->
                 <div class="space-y-4">
-                    <h3 class="font-bold text-lg mb-4">Tactical Signals</h3>
+                    <h3 class="font-bold text-lg mb-4 text-slate-700">Bottom Detectors</h3>
                     
-                    <!-- EMA Cross -->
                     <div class="signal-card bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-slate-300" id="sigEma">
                         <div class="flex justify-between items-start mb-2">
                             <h4 class="font-bold">EMA Crossover</h4>
-                            <span class="status-badge px-2 py-0.5 rounded text-[10px] bg-slate-100 text-slate-500">WAITING</span>
+                            <span class="status-badge px-2 py-0.5 rounded text-[10px] bg-slate-100 text-slate-500 font-bold uppercase">WAITING</span>
                         </div>
-                        <p class="text-xs text-slate-500 leading-relaxed">Wait for the 5-period EMA to cross above the 20-period EMA for trend confirmation.</p>
+                        <p class="text-xs text-slate-500 leading-relaxed">Wait for 5 EMA to cross above 20 EMA, indicating a confirmed trend reversal.</p>
                     </div>
 
-                    <!-- Basing -->
                     <div class="signal-card bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-slate-300" id="sigBasing">
                         <div class="flex justify-between items-start mb-2">
                             <h4 class="font-bold">Basing (>5% off Low)</h4>
-                            <span class="status-badge px-2 py-0.5 rounded text-[10px] bg-slate-100 text-slate-500">WAITING</span>
+                            <span class="status-badge px-2 py-0.5 rounded text-[10px] bg-slate-100 text-slate-500 font-bold uppercase">WAITING</span>
                         </div>
-                        <p class="text-xs text-slate-500 leading-relaxed">Ideally at least 5% above 52-week lows to show evidence of holding support.</p>
+                        <p class="text-xs text-slate-500 leading-relaxed">Confirms the stock has stopped falling and is establishing a floor above its 52w low.</p>
                     </div>
 
-                    <!-- Right Side V -->
                     <div class="signal-card bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-slate-300" id="sigRightV">
                         <div class="flex justify-between items-start mb-2">
                             <h4 class="font-bold">Right Side of "V"</h4>
-                            <span class="status-badge px-2 py-0.5 rounded text-[10px] bg-slate-100 text-slate-500">WAITING</span>
+                            <span class="status-badge px-2 py-0.5 rounded text-[10px] bg-slate-100 text-slate-500 font-bold uppercase">WAITING</span>
                         </div>
-                        <p class="text-xs text-slate-500 leading-relaxed">Wait for price to stop declining and reverse back to your target entry level.</p>
+                        <p class="text-xs text-slate-500 leading-relaxed">Identifies if price action has recently bottomed and is moving back up into buy levels.</p>
                     </div>
 
-                    <!-- Waterfall -->
                     <div class="signal-card bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-slate-300" id="sigWaterfall">
                         <div class="flex justify-between items-start mb-2">
                             <h4 class="font-bold">Waterfall Decline</h4>
-                            <span class="status-badge px-2 py-0.5 rounded text-[10px] bg-slate-100 text-slate-500">WAITING</span>
+                            <span class="status-badge px-2 py-0.5 rounded text-[10px] bg-slate-100 text-slate-500 font-bold uppercase">WAITING</span>
                         </div>
-                        <p class="text-xs text-slate-500 leading-relaxed">A riskier setup triggered by high volume rapid drops, often resulting in capitulation.</p>
+                        <p class="text-xs text-slate-500 leading-relaxed">Detection of rapid high-volume drops that often signal final capitulation.</p>
+                    </div>
+
+                    <!-- Philosophy Tip -->
+                    <div class="p-6 bg-blue-600 rounded-xl text-white shadow-lg mt-8">
+                        <p class="text-xs font-bold uppercase tracking-widest mb-2 opacity-80">Philosophy Note</p>
+                        <p class="text-sm italic">"I do not recommend buying when the general public is 'buying the dip'. Wait for dejection."</p>
                     </div>
                 </div>
 
@@ -179,17 +175,20 @@
         </div>
 
         <!-- Loading Overlay -->
-        <div id="loadingOverlay" class="hidden fixed inset-0 bg-white/80 backdrop-blur-sm z-[100] flex flex-col items-center justify-center">
+        <div id="loadingOverlay" class="hidden fixed inset-0 bg-white/90 backdrop-blur-sm z-[100] flex flex-col items-center justify-center text-center px-6">
             <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4"></div>
-            <p class="text-slate-600 font-medium">Crunching Tactic Signals...</p>
+            <p class="text-slate-800 font-bold text-lg">Analyzing Patterns...</p>
+            <p class="text-slate-500 text-sm mt-1 max-w-xs" id="loadingSubtext">Checking history, valuation and news</p>
         </div>
 
     </main>
 
     <script>
-        // API Keys (Hardcoded as requested for static hosting)
+        // API Keys from your request
         const FMP_KEY = 'zZ5zECyopZEcPtKvkqlb1R52jv2vFusj';
         const FINNHUB_KEY = 'd22igc9r01qr7ajlkob0d22igc9r01qr7ajlkobg';
+        const AV_KEY = 'JQQUUJQRAX8TLXSM'; 
+        const MS_KEY = 'adc91e9b5f1decaabf6d74dc20a4416f'; // MarketStack Fallback
         
         let stockChart = null;
 
@@ -199,6 +198,7 @@
             dashboard: document.getElementById('dashboardContent'),
             welcome: document.getElementById('welcomeState'),
             loader: document.getElementById('loadingOverlay'),
+            loadingSub: document.getElementById('loadingSubtext'),
             price: document.getElementById('currentPrice'),
             change: document.getElementById('priceChange'),
             low52: document.getElementById('low52'),
@@ -206,32 +206,129 @@
             pe: document.getElementById('peRatio'),
             valuation: document.getElementById('valuationStatus'),
             signalBox: document.getElementById('overallSignal'),
-            signalText: document.getElementById('signalText')
+            signalText: document.getElementById('signalText'),
+            catalysts: document.getElementById('catalystList')
         };
 
-        // --- Core Analysis Logic ---
+        // --- Utility: Fetch with Retries ---
 
-        async function fetchStockData(symbol) {
+        async function fetchWithRetry(url, options = {}, retries = 2, backoff = 800) {
             try {
-                // 1. Fetch Daily History (FMP)
-                const histResponse = await fetch(`https://financialmodelingprep.com/api/v3/historical-price-full/${symbol}?apikey=${FMP_KEY}`);
-                const histData = await histResponse.json();
+                const response = await fetch(url, options);
+                if (response.status === 403 || response.status === 429) {
+                    throw new Error(`LIMIT:${response.status}`);
+                }
+                if (!response.ok) throw new Error(`HTTP:${response.status}`);
+                return await response.json();
+            } catch (err) {
+                if (retries > 0) {
+                    await new Promise(res => setTimeout(res, backoff));
+                    return fetchWithRetry(url, options, retries - 1, backoff * 1.5);
+                }
+                throw err;
+            }
+        }
 
-                // 2. Fetch Profile/Metrics (FMP)
-                const profileResponse = await fetch(`https://financialmodelingprep.com/api/v3/profile/${symbol}?apikey=${FMP_KEY}`);
-                const profileData = await profileResponse.json();
+        // --- Data Fetching ---
 
-                if (!histData.historical || histData.historical.length === 0) throw new Error("Ticker not found");
+        async function fetchAnalysisData(symbol) {
+            try {
+                ui.loadingSub.textContent = "Connecting to Financial Modeling Prep...";
+                
+                let historical = null;
+                let profile = {};
+                let news = [];
+
+                // 1. TRY FMP (Primary)
+                try {
+                    const [h, p, n] = await Promise.all([
+                        fetchWithRetry(`https://financialmodelingprep.com/api/v3/historical-price-full/${symbol}?apikey=${FMP_KEY}`),
+                        fetchWithRetry(`https://financialmodelingprep.com/api/v3/profile/${symbol}?apikey=${FMP_KEY}`),
+                        fetchWithRetry(`https://financialmodelingprep.com/api/v3/stock_news?tickers=${symbol}&limit=5&apikey=${FMP_KEY}`)
+                    ]);
+                    
+                    if (h && h.historical && h.historical.length > 0) {
+                        historical = h.historical.map(d => ({
+                            date: d.date,
+                            close: d.close,
+                            low: d.low,
+                            volume: d.volume,
+                            changePercent: d.changePercent || 0
+                        }));
+                        profile = p[0] || {};
+                        news = n || [];
+                        console.log("Data source: FMP");
+                    }
+                } catch (e) {
+                    console.warn("FMP Failed:", e.message);
+                }
+
+                // 2. TRY MARKETSTACK (Secondary)
+                if (!historical) {
+                    ui.loadingSub.textContent = "FMP Limit Reached. Trying MarketStack...";
+                    try {
+                        const msRes = await fetchWithRetry(`https://api.marketstack.com/v1/eod?access_key=${MS_KEY}&symbols=${symbol}&limit=250`);
+                        if (msRes && msRes.data && msRes.data.length > 0) {
+                            historical = msRes.data.map(d => ({
+                                date: d.date.split('T')[0],
+                                close: d.close,
+                                low: d.low,
+                                volume: d.volume,
+                                changePercent: 0 // Will calculate manually if needed
+                            }));
+                            console.log("Data source: MarketStack");
+                        }
+                    } catch (e) {
+                        console.warn("MarketStack Failed:", e.message);
+                    }
+                }
+
+                // 3. TRY ALPHAVANTAGE (Tertiary)
+                if (!historical) {
+                    ui.loadingSub.textContent = "Trying AlphaVantage Fallback...";
+                    try {
+                        const avRes = await fetchWithRetry(`https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${symbol}&apikey=${AV_KEY}`);
+                        
+                        if (avRes["Note"] || avRes["Information"]) {
+                            throw new Error("AlphaVantage Rate Limited");
+                        }
+
+                        const timeSeries = avRes["Time Series (Daily)"];
+                        if (timeSeries) {
+                            historical = Object.entries(timeSeries).map(([date, values]) => ({
+                                date,
+                                close: parseFloat(values["4. close"]),
+                                low: parseFloat(values["3. low"]),
+                                volume: parseFloat(values["5. volume"]),
+                                changePercent: 0
+                            }));
+                            console.log("Data source: AlphaVantage");
+                        }
+                    } catch (e) {
+                        console.warn("AlphaVantage Failed:", e.message);
+                    }
+                }
+
+                if (!historical || historical.length === 0) {
+                    throw new Error("Could not retrieve historical data from any source. All API keys might be at their daily limits.");
+                }
+
+                // Normalize: Sort ascending by date
+                historical.sort((a,b) => new Date(a.date) - new Date(b.date));
 
                 return {
-                    history: histData.historical.reverse(), // Oldest to Newest
-                    profile: profileData[0] || {}
+                    history: historical,
+                    profile: profile,
+                    news: news
                 };
             } catch (err) {
-                alert("Error fetching data: " + err.message);
+                console.error("Critical Analysis Error:", err);
+                alert(`Error: ${err.message}`);
                 return null;
             }
         }
+
+        // --- Indicators ---
 
         function calculateEMA(data, period) {
             let ema = [];
@@ -247,7 +344,8 @@
             return ema;
         }
 
-        function analyzeTactics(history, profile) {
+        function analyzeTactics(data) {
+            const history = data.history;
             const currentPrice = history[history.length - 1].close;
             const prices = history.map(d => d.close);
             const volumes = history.map(d => d.volume);
@@ -257,7 +355,7 @@
             const low52 = Math.min(...yearData.map(d => d.low));
             const distFromLow = ((currentPrice - low52) / low52) * 100;
 
-            // EMA Cross Logic
+            // EMA Cross
             const ema5 = calculateEMA(history, 5);
             const ema20 = calculateEMA(history, 20);
             const lastEma5 = ema5[ema5.length - 1];
@@ -268,19 +366,18 @@
             const isEmaBullish = lastEma5 > lastEma20;
             const isEmaCrossover = lastEma5 > lastEma20 && prevEma5 <= prevEma20;
 
-            // Waterfall Check (Drop > 10% in 5 days with high volume spike)
-            const weekPrices = prices.slice(-5);
-            const weekVol = volumes.slice(-5);
+            // Waterfall Check
+            const recent10 = prices.slice(-10);
+            const drop10 = ((recent10[9] - recent10[0]) / recent10[0]) * 100;
             const avgVol = volumes.slice(-30).reduce((a,b)=>a+b,0)/30;
-            const drop = ((weekPrices[4] - weekPrices[0]) / weekPrices[0]) * 100;
-            const volSpike = weekVol.some(v => v > avgVol * 1.5);
-            const isWaterfall = drop < -10 && volSpike;
+            const volSpike = volumes[volumes.length-1] > avgVol * 1.3;
+            const isWaterfall = drop10 < -12 && volSpike;
 
-            // Basing (>5% off low)
-            const isBasing = distFromLow >= 5 && distFromLow <= 15;
+            // Basing Logic
+            const isBasing = distFromLow >= 3 && distFromLow <= 12;
 
-            // Right Side V (Recent bounce from low)
-            const localLow = Math.min(...prices.slice(-20));
+            // Right Side V
+            const localLow = Math.min(...prices.slice(-15));
             const isRightV = currentPrice > localLow && prices[prices.length-2] < currentPrice;
 
             return {
@@ -297,69 +394,105 @@
             };
         }
 
+        // --- UI Rendering ---
+
         function updateUI(data, results, symbol) {
             ui.welcome.classList.add('hidden');
             ui.dashboard.classList.remove('hidden');
 
             const lastDay = data.history[data.history.length - 1];
-            const changePct = lastDay.changePercent || 0;
+            const prevDay = data.history[data.history.length - 2];
+            const changePct = lastDay.changePercent || ((lastDay.close - prevDay.close) / prevDay.close) * 100;
 
-            // Summary Stats
             ui.price.textContent = `$${results.currentPrice.toFixed(2)}`;
-            ui.change.textContent = `${changePct > 0 ? '+' : ''}${changePct.toFixed(2)}% Today`;
-            ui.change.className = `text-sm mt-1 font-medium ${changePct >= 0 ? 'text-green-600' : 'text-red-600'}`;
+            ui.change.textContent = `${changePct >= 0 ? '▲' : '▼'} ${Math.abs(changePct).toFixed(2)}%`;
+            ui.change.className = `text-sm mt-1 font-bold ${changePct >= 0 ? 'text-green-600' : 'text-red-600'}`;
             
             ui.low52.textContent = `$${results.low52.toFixed(2)}`;
             ui.distLow.textContent = `${results.distFromLow.toFixed(1)}% above 52w low`;
             
-            const pe = data.profile.pe || 'N/A';
-            ui.pe.textContent = pe === 'N/A' ? 'N/A' : parseFloat(pe).toFixed(1);
-            ui.valuation.textContent = pe < 15 ? 'Discount Valuation' : pe > 25 ? 'Premium Valuation' : 'Fair Value';
-            ui.valuation.className = `text-sm mt-1 font-medium ${pe < 15 ? 'text-green-600' : 'text-slate-500'}`;
+            const displayPe = data.profile.pe || '—';
+            ui.pe.textContent = displayPe === '—' ? '—' : parseFloat(displayPe).toFixed(1);
+            
+            if (displayPe !== '—') {
+                const peVal = parseFloat(displayPe);
+                const isCheap = peVal < 15 && peVal > 0;
+                ui.valuation.textContent = isCheap ? 'Deep Value Setup' : peVal < 0 ? 'Unprofitable' : 'Market Premium';
+                ui.valuation.className = `text-sm mt-1 font-bold ${isCheap ? 'text-green-600' : 'text-slate-400'}`;
+            } else {
+                ui.valuation.textContent = "PE Data N/A";
+                ui.valuation.className = "text-sm mt-1 font-bold text-slate-300";
+            }
 
-            // Signals Update
-            updateSignal('sigEma', results.isEmaCrossover, results.isEmaBullish ? 'BULLISH' : 'WAITING');
-            updateSignal('sigBasing', results.isBasing, results.isBasing ? 'BASE DETECTED' : 'WAITING');
-            updateSignal('sigRightV', results.isRightV, results.isRightV ? 'REVERSING' : 'DECLINING');
-            updateSignal('sigWaterfall', results.isWaterfall, results.isWaterfall ? 'CRASHING' : 'STABLE');
+            ui.catalysts.innerHTML = '';
+            if (data.news.length === 0) {
+                ui.catalysts.innerHTML = '<p class="text-slate-400 text-sm italic text-center py-4">News feed unavailable for this ticker/source.</p>';
+            } else {
+                data.news.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = "flex gap-4 p-3 hover:bg-slate-50 rounded-lg transition border border-transparent hover:border-slate-100";
+                    div.innerHTML = `
+                        <div class="flex-1">
+                            <a href="${item.url}" target="_blank" class="text-sm font-bold text-slate-800 hover:text-blue-600 leading-tight block mb-1">${item.title}</a>
+                            <div class="flex items-center gap-2 text-[10px] text-slate-400">
+                                <span class="font-bold text-blue-500 uppercase">${item.site}</span>
+                                <span>•</span>
+                                <span>${new Date(item.publishedDate).toLocaleDateString()}</span>
+                            </div>
+                        </div>
+                    `;
+                    ui.catalysts.appendChild(div);
+                });
+            }
 
-            // Overall
-            let scores = [results.isEmaBullish, results.isBasing, results.isRightV].filter(x => x).length;
-            if (scores >= 2) {
-                ui.signalBox.className = "p-6 rounded-xl shadow-sm flex flex-col justify-center items-center text-center bg-green-50 border border-green-200 text-green-700";
-                ui.signalText.textContent = "BUY SIGNAL";
+            updateBadge('sigEma', results.isEmaBullish, results.isEmaCrossover ? 'CROSSOVER!' : results.isEmaBullish ? 'BULLISH TREND' : 'WAITING');
+            updateBadge('sigBasing', results.isBasing, results.isBasing ? 'BASE ESTABLISHED' : 'WAITING');
+            updateBadge('sigRightV', results.isRightV, results.isRightV ? 'REVERSING UP' : 'STILL DECLINING');
+            updateBadge('sigWaterfall', results.isWaterfall, results.isWaterfall ? 'CAPITULATION?' : 'STABLE');
+
+            let buyScore = 0;
+            if (results.isEmaBullish) buyScore++;
+            if (results.isBasing) buyScore++;
+            if (results.isRightV) buyScore++;
+            
+            if (buyScore >= 2) {
+                ui.signalBox.className = "p-6 rounded-xl shadow-lg flex flex-col justify-center items-center text-center bg-green-600 text-white scale-105 transition-transform";
+                ui.signalText.textContent = "STRONG BUY SETUP";
             } else if (results.isWaterfall) {
-                ui.signalBox.className = "p-6 rounded-xl shadow-sm flex flex-col justify-center items-center text-center bg-orange-50 border border-orange-200 text-orange-700";
+                ui.signalBox.className = "p-6 rounded-xl shadow-sm flex flex-col justify-center items-center text-center bg-orange-500 text-white";
                 ui.signalText.textContent = "WATCH WATERFALL";
             } else {
-                ui.signalBox.className = "p-6 rounded-xl shadow-sm flex flex-col justify-center items-center text-center bg-slate-100 border border-slate-200 text-slate-500";
-                ui.signalText.textContent = "NO SETUP";
+                ui.signalBox.className = "p-6 rounded-xl shadow-sm flex flex-col justify-center items-center text-center bg-slate-100 text-slate-400";
+                ui.signalText.textContent = "WAITING FOR BASE";
             }
 
             renderChart(data.history, results.ema5, results.ema20);
         }
 
-        function updateSignal(id, active, label) {
+        function updateBadge(id, active, label) {
             const el = document.getElementById(id);
             const badge = el.querySelector('.status-badge');
             
-            if (active || label.includes('BULLISH') || label.includes('DETECTED') || label.includes('REVERSING')) {
+            if (active || label.includes('BULLISH') || label.includes('REVERSING')) {
                 el.classList.replace('border-l-slate-300', 'border-l-blue-500');
-                badge.className = "status-badge px-2 py-0.5 rounded text-[10px] bg-blue-100 text-blue-600 font-bold";
+                el.classList.add('bg-blue-50/40');
+                badge.className = "status-badge px-2 py-0.5 rounded text-[10px] bg-blue-600 text-white font-bold uppercase";
                 badge.textContent = label;
             } else {
                 el.classList.replace('border-l-blue-500', 'border-l-slate-300');
-                badge.className = "status-badge px-2 py-0.5 rounded text-[10px] bg-slate-100 text-slate-500";
+                el.classList.remove('bg-blue-50/40');
+                badge.className = "status-badge px-2 py-0.5 rounded text-[10px] bg-slate-100 text-slate-500 font-bold uppercase";
                 badge.textContent = label;
             }
         }
 
         function renderChart(history, ema5, ema20) {
             const ctx = document.getElementById('stockChart').getContext('2d');
-            const labels = history.slice(-60).map(d => d.date);
-            const priceData = history.slice(-60).map(d => d.close);
-            const ema5Data = ema5.slice(-60);
-            const ema20Data = ema20.slice(-60);
+            const subsetSize = 100; 
+            const labels = history.slice(-subsetSize).map(d => d.date);
+            const prices = history.slice(-subsetSize).map(d => d.close);
+            const e5 = ema5.slice(-subsetSize);
+            const e20 = ema20.slice(-subsetSize);
 
             if (stockChart) stockChart.destroy();
 
@@ -368,54 +501,32 @@
                 data: {
                     labels: labels,
                     datasets: [
-                        {
-                            label: 'Price',
-                            data: priceData,
-                            borderColor: '#1e293b',
-                            borderWidth: 2,
-                            pointRadius: 0,
-                            tension: 0.1
-                        },
-                        {
-                            label: '5 EMA',
-                            data: ema5Data,
-                            borderColor: '#3b82f6',
-                            borderWidth: 1.5,
-                            pointRadius: 0,
-                            borderDash: [5, 5]
-                        },
-                        {
-                            label: '20 EMA',
-                            data: ema20Data,
-                            borderColor: '#fb923c',
-                            borderWidth: 1.5,
-                            pointRadius: 0
-                        }
+                        { label: 'Price', data: prices, borderColor: '#0f172a', borderWidth: 2, pointRadius: 0, tension: 0.1, order: 1 },
+                        { label: '5 EMA', data: e5, borderColor: '#3b82f6', borderWidth: 1.5, pointRadius: 0, borderDash: [5, 5], order: 2 },
+                        { label: '20 EMA', data: e20, borderColor: '#fb923c', borderWidth: 1.5, pointRadius: 0, order: 3 }
                     ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
+                    plugins: { legend: { display: false } },
                     scales: {
                         x: { display: false },
-                        y: { position: 'right', grid: { color: '#f1f5f9' } }
+                        y: { position: 'right', grid: { color: 'rgba(0,0,0,0.03)' }, ticks: { font: { size: 10 } } }
                     },
-                    plugins: { legend: { display: false } }
+                    interaction: { intersect: false, mode: 'index' }
                 }
             });
         }
-
-        // --- Event Handlers ---
 
         ui.btn.addEventListener('click', async () => {
             const symbol = ui.input.value.trim().toUpperCase();
             if (!symbol) return;
 
             ui.loader.classList.remove('hidden');
-            const data = await fetchStockData(symbol);
+            const data = await fetchAnalysisData(symbol);
             if (data) {
-                const results = analyzeTactics(data.history, data.profile);
+                const results = analyzeTactics(data);
                 updateUI(data, results, symbol);
             }
             ui.loader.classList.add('hidden');
